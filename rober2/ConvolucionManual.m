@@ -1,7 +1,7 @@
-cd C:\Users\zaval\Desktop\ClasesDoc\rober2;
+cd /home/agustin/Code/Matlab/ClasesDoc/rober2;
 
 %cargar y mostrar imagen rgb
-imagenRGB = imread('C:\Users\zaval\Desktop\ClasesDoc\rober\Pruebas\gatito.jpg');
+imagenRGB = imread('/home/agustin/Images/gatito.jpg');
 
 figure(1)
 imshow(imagenRGB)
