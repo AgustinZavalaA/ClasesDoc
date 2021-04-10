@@ -98,5 +98,7 @@ imshow(J2)
 
 figure(7)
 imshow(I2)
-
+a = ' es gay';
+J = 'Justin';
+disp(strcat(J, a))
 
