@@ -13,7 +13,8 @@ function patron = getImagesFromFolder(folderDir, startIndex, endIndex, sizeFacto
     %carga una lista de nombres de las imagenes
     jpegFiles = dir(filePattern);
     %patron = cell(length(jpegFiles));
-    patron = zeros(120*sizeFactor*90*sizeFactor*3,length(jpegFiles));
+    %patron = zeros(120*sizeFactor*90*sizeFactor*3,length(jpegFiles));
+    patron = zeros(96, 128, 3,length(jpegFiles));
     for k = 1:length(jpegFiles)
         % si ya se llego al limite se rompe el ciclo
         if endIndex == k
@@ -26,8 +27,8 @@ function patron = getImagesFromFolder(folderDir, startIndex, endIndex, sizeFacto
         fprintf(1, 'Now reading %s\n', fullFileName);
         imageArray = imread(fullFileName);
         imageArray = imresize(imageArray, sizeFactor);
-        patron(:,k) = imageArray(:);
+        patron(:, :, :, k) = imageArray;
         %imshow(imageArray);  % Display image.
     end
     
-    patron = double(patron(:,startIndex:endIndex));
+    patron = uint8(patron(:,:,:,startIndex:endIndex));

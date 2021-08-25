@@ -1,0 +1,145 @@
+% descargar los datos necesarios
+cd /home/agustin/Code/Matlab/ClasesDoc/RedLimpiaPlayas;
+
+% cargar los datos a memoria
+baseFolder = '/home/agustin/Code/Python/Model_LP2021/dataset_completo/Classify';
+[metaTrain, metaTest, metaCTrain, metaCTest] = getImagesFromFolder(strcat(baseFolder, '/Meta'), 1, 0.8);
+[latasNTrain, latasNTest, latasNCTrain, latasNCTest] = getImagesFromFolder(strcat(baseFolder, '/LatasNegras'), 1, 0.8);
+[latasVTrain, latasVTest, latasVCTrain, latasVCTest]= getImagesFromFolder(strcat(baseFolder, '/LatasVerdes'), 1, 0.8);
+[banistaTrain, banistaTest, banistaCTrain, banistaCTest] = getImagesFromFolder(strcat(baseFolder, '/Banistas'), 1, 0.8);
+
+%[trainingImages,trainingLabels,testImages,testLabels] = helperCIFAR10Data.load(cifar10Data);
+%trainingImagesBeach;
+
+trainingImages = cat(4, metaTrain, latasNTrain, latasVTrain, banistaTrain);
+testImages  = cat(4, metaTest, latasNTest, latasVTest, banistaTest);
+trainingLabels = cat(1, metaCTrain, latasNCTrain, latasVCTrain, banistaCTrain);
+testLabels = cat(1, metaCTest, latasNCTest, latasVCTest, banistaCTest);
+
+%si son pocas imagenes descomentar
+%montage(trainingImages);
+
+%metricas
+size(trainingImages)
+numImageCategories = 4;
+categories(trainingLabels)
+
+% mostrar varias imagenes
+%figure()
+%thumbnails = trainingImages(:,:,:,1:100);
+%montage(thumbnails)
+
+% Create the image input layer for 32x32x3 CIFAR-10 images.
+[height,width,numChannels, ~] = size(trainingImages);
+
+imageSize = [height width numChannels];
+inputLayer = imageInputLayer(imageSize)
+
+% Convolutional layer parameters
+filterSize = [5 5];
+numFilters = 32;
+
+middleLayers = [
+    
+% The first convolutional layer has a bank of 32 5x5x3 filters. A
+% symmetric padding of 2 pixels is added to ensure that image borders
+% are included in the processing. This is important to avoid
+% information at the borders being washed away too early in the
+% network.
+convolution2dLayer(filterSize,numFilters,'Padding',2)
+
+% Note that the third dimension of the filter can be omitted because it
+% is automatically deduced based on the connectivity of the network. In
+% this case because this layer follows the image layer, the third
+% dimension must be 3 to match the number of channels in the input
+% image.
+
+% Next add the ReLU layer:
+reluLayer()
+
+% Follow it with a max pooling layer that has a 3x3 spatial pooling area
+% and a stride of 2 pixels. This down-samples the data dimensions from
+% 32x32 to 15x15.
+maxPooling2dLayer(3,'Stride',2)
+
+% Repeat the 3 core layers to complete the middle of the network.
+convolution2dLayer(filterSize,numFilters,'Padding',2)
+reluLayer()
+maxPooling2dLayer(3, 'Stride',2)
+
+convolution2dLayer(filterSize,2 * numFilters,'Padding',2)
+reluLayer()
+maxPooling2dLayer(3,'Stride',2)
+
+]
+
+finalLayers = [
+    
+% Add a fully connected layer with 64 output neurons. The output size of
+% this layer will be an array with a length of 64.
+fullyConnectedLayer(64)
+
+% Add an ReLU non-linearity.
+reluLayer
+
+% Add the last fully connected layer. At this point, the network must
+% produce 10 signals that can be used to measure whether the input image
+% belongs to one category or another. This measurement is made using the
+% subsequent loss layers.
+fullyConnectedLayer(numImageCategories)
+
+% Add the softmax loss layer and classification layer. The final layers use
+% the output of the fully connected layer to compute the categorical
+% probability distribution over the image classes. During the training
+% process, all the network weights are tuned to minimize the loss over this
+% categorical distribution.
+softmaxLayer
+classificationLayer
+]
+
+layers = [
+    inputLayer
+    middleLayers
+    finalLayers
+    ]
+
+% Set the network training options
+opts = trainingOptions('sgdm', ...
+    'Momentum', 0.9, ...
+    'InitialLearnRate', 0.0001, ...
+    'LearnRateSchedule', 'piecewise', ...
+    'LearnRateDropFactor', 0.1, ...
+    'LearnRateDropPeriod', 8, ...
+    'L2Regularization', 0.004, ...
+    'MaxEpochs', 80, ...
+    'MiniBatchSize', 64, ...
+    'Verbose', true);
+
+% A trained network is loaded from disk to save time when running the
+% example. Set this flag to true to train the network.
+doTraining = true;
+
+if doTraining    
+    % Train a network.
+    cifar10Net = trainNetwork(trainingImages, trainingLabels, layers, opts);
+else
+    % Load pre-trained detector for the example.
+    load('RedLP-90Acc','cifar10Net')       
+end
+
+% Extract the first convolutional layer weights
+w = cifar10Net.Layers(2).Weights;
+
+% rescale the weights to the range [0, 1] for better visualization
+w = rescale(w);
+
+figure
+montage(w)
+
+% Run the network on the test set.
+YTest = classify(cifar10Net, testImages);
+
+% Calculate the accuracy.
+accuracy = sum(YTest == testLabels)/numel(testLabels)
+
+save('jun03.mat');

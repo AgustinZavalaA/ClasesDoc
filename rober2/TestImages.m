@@ -1,4 +1,4 @@
-cd C:\Users\zaval\Desktop\ClasesDoc\rober2;
+cd /home/agustin/Code/Matlab/ClasesDoc/R-CNN-Tutorial;
 
 %cargar los pesos y bias del entrenamiento
 % automatizar el entrnamiento
@@ -7,10 +7,17 @@ cd C:\Users\zaval\Desktop\ClasesDoc\rober2;
 load('WyB.mat');
 
 %cargar las imagenes para hacer el test
-baseFolder = 'C:\Users\zaval\Desktop\ClasesDoc\rober\pruebas';
-latasV = getImagesFromFolder(strcat(baseFolder, '\LatasVerdes'), 21, 40,0.5);
-latasN = getImagesFromFolder(strcat(baseFolder, '\LatasNegras'), 21, 40,0.5);
-arena = getImagesFromFolder(strcat(baseFolder, '\Arena'), 5, 5,0.5);
+baseFolder = '/home/agustin/Code/Python/Model_LP2021/dataset_completo/Classify';
+meta = getImagesFromFolder(strcat(baseFolder, '/Meta'), 1, 40,1);
+latasN = getImagesFromFolder(strcat(baseFolder, '/LatasNegras'), 1, 40,1);
+latasV = getImagesFromFolder(strcat(baseFolder, '/LatasVerdes'), 1, 40,1);
+banista = getImagesFromFolder(strcat(baseFolder, '/Banistas'), 1, 40,1);
+
+trainigImagesLP = uint8(zeros(96,128,3,160));
+trainigImagesLP(:,:,:,1:40) = meta;
+trainigImagesLP(:,:,:,41:80) = latasN;
+trainigImagesLP(:,:,:,81:120) = latasV;
+trainigImagesLP(:,:,:,121:160) = banista;
 % patron de entrada
 p = [latasV latasN arena];
 %normalizacion
